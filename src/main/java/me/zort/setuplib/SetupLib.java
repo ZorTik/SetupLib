@@ -82,7 +82,6 @@ public class SetupLib<T> implements Iterator<SetupPart<T>>, Cloneable {
      * @throws NotSetupException if target does not contain any {@link Setup}.
      */
     public SetupLib(Plugin plugin, Class<T> target) throws NotSetupException {
-        checkSetup(target);
         this.target = target;
         this.plugin = plugin;
         this.cache = new HashMap<>();
@@ -92,6 +91,7 @@ public class SetupLib<T> implements Iterator<SetupPart<T>>, Cloneable {
         onFinish((player, result) -> {});
         onError((player, err) -> {});
         setDecorator(null);
+        checkSetup(target);
     }
 
     public SetupLib<T> setDecorator(@Nullable SetupMessageDecorator<T> decorator) {
