@@ -21,6 +21,13 @@ import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * A representation of setup.
+ * When started, this object is cloned for keeping this data
+ * as template.
+ *
+ * @param <T> Type of target.
+ */
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class SetupLib<T> implements Iterator<SetupPart<T>>, Cloneable {
 
@@ -42,6 +49,9 @@ public class SetupLib<T> implements Iterator<SetupPart<T>>, Cloneable {
     }
 
     public static <T> SetupLib<T> create(Plugin plugin, Class<T> clazz) {
+        if(!LISTENERS.containsKey(plugin.getName())) {
+            init(plugin);
+        }
         return new SetupLib<>(plugin, clazz);
     }
 

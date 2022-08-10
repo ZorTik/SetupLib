@@ -108,6 +108,7 @@ public class SetupLibListener implements Listener {
 
             // Clearing instances by the plugin.
             toRem.forEach(setups::remove);
+            SetupLib.clear(plugin);
         }
     }
 
