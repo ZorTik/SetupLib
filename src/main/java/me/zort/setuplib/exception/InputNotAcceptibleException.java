@@ -9,7 +9,7 @@ import java.util.List;
  * for custom types.
  * <p>
  * Basically this exception allows you to send player
- * error message while anything occurs in your own
+ * error messages while anything occurs in your own
  * type build.
  * <p>
  * For example: Player inputs nickname of player,
@@ -21,10 +21,10 @@ import java.util.List;
 public class InputNotAcceptibleException extends Exception {
 
     @Getter
-    private final List<String> message;
+    private final List<String> messageLines;
 
     public InputNotAcceptibleException(List<String> message) {
-        this.message = message;
+        this.messageLines = message;
     }
 
 }

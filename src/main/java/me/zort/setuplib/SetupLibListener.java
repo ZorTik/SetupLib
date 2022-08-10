@@ -73,7 +73,7 @@ public class SetupLibListener implements Listener {
                                 current.set(builder.build(player, e.getMessage()));
                             } catch (InputNotAcceptibleException ex) {
                                 // Custom error.
-                                for(String s : ex.getMessage()) {
+                                for(String s : ex.getMessageLines()) {
                                     SetupLib.send(player, s);
                                 }
                             }
