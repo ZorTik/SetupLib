@@ -149,7 +149,7 @@ public class SetupLib<T> implements Iterator<SetupPart<T>>, Cloneable {
 
         // For better user experience, I save future to use.
         CompletableFuture<T> future = new CompletableFuture<>();
-        futures.add(future);
+        clone.futures.add(future);
         return future;
     }
 
