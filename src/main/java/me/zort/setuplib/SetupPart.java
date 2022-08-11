@@ -7,10 +7,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 
+@Getter
 public class SetupPart<T> {
 
     private final SetupLib<T> setup;
-    @Getter
     private final Field field;
 
     protected SetupPart(SetupLib<T> setup, String fieldName) {
@@ -29,6 +29,9 @@ public class SetupPart<T> {
     public void send(Player player) {
         Setup annot = field.getAnnotation(Setup.class);
         String[] lines = annot.message();
+        for(SetupLib.SetupMessageDecorator<T> d : setup.getDecorators()) {
+            lines = d.modify(this, lines);
+        }
         for(String line : lines) {
             SetupLib.send(player, line);
         }

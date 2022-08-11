@@ -61,6 +61,7 @@ public class SetupLib<T> implements Iterator<SetupPart<T>>, Cloneable {
     private final Plugin plugin;
     @Getter(AccessLevel.PROTECTED)
     private final Map<String, Object> cache;
+    @Getter(AccessLevel.PROTECTED)
     private SetupMessageDecorator<T>[] decorators;
     @Getter(AccessLevel.PROTECTED)
     private Map<Class<?>, CustomTypeBuilder<?>> customTypes;
@@ -242,7 +243,11 @@ public class SetupLib<T> implements Iterator<SetupPart<T>>, Cloneable {
     private Field[] getApplicableFields() {
         Field[] fields = new Field[0];
         for(Field field : target.getDeclaredFields()) {
-            if(Primitives.isWrapperType(field.getType())) {
+            Class<?> type = Primitives.wrap(field.getType());
+            if(RequiredType.valueOf(type) != null
+            || customTypes.keySet()
+                    .stream()
+                    .anyMatch(t -> t.isAssignableFrom(type))) {
                 fields = (Field[]) ArrayUtils.add(fields, field);
             }
         }
