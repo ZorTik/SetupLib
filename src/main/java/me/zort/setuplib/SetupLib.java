@@ -70,7 +70,6 @@ public class SetupLib<T> implements Iterator<SetupPart<T>>, Cloneable {
     private FinishHandler<T> finishHandler;
     private ErrorHandler<T> errorHandler;
 
-
     private final List<CompletableFuture<T>> futures;
 
     @Getter(AccessLevel.PROTECTED)
@@ -159,6 +158,13 @@ public class SetupLib<T> implements Iterator<SetupPart<T>>, Cloneable {
         CompletableFuture<T> future = new CompletableFuture<>();
         clone.futures.add(future);
         return future;
+    }
+
+    protected void cancel() {
+        SetupLibListener listener = LISTENERS.get(plugin.getName());
+        if(listener != null) {
+            listener.handleSetupClose(this);
+        }
     }
 
     /**

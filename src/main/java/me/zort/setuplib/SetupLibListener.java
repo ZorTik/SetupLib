@@ -116,7 +116,15 @@ public class SetupLibListener implements Listener {
         }
     }
 
-    private void handleSetupClose(Player player, @Nullable Throwable err) {
+    protected void handleSetupClose(SetupLib<?> setup) {
+        for(UUID uuid : new ArrayList<>(setups.keySet())) {
+            if(setups.get(uuid) == setup) {
+                setups.remove(uuid);
+            }
+        }
+    }
+
+    protected void handleSetupClose(Player player, @Nullable Throwable err) {
         SetupLib<?> setup = setups.remove(player.getUniqueId());
         if(setup != null && err != null) {
             setup.handleError(player, err);

@@ -22,6 +22,10 @@ public class SetupPart<T> {
         }
     }
 
+    public void cancel() {
+        setup.cancel();
+    }
+
     public void set(Object obj) {
         setup.getCache().put(field.getName(), obj);
     }
@@ -44,6 +48,10 @@ public class SetupPart<T> {
 
     public Setup getAnnot() {
         return field.getAnnotation(Setup.class);
+    }
+
+    public String getName() {
+        return field.getName();
     }
 
 }
