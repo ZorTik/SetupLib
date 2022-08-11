@@ -176,7 +176,7 @@ public class SetupLib<T> implements Iterator<SetupPart<T>>, Cloneable {
             for(String fieldName : cache.keySet()) {
                 Object obj = cache.get(fieldName);
                 try {
-                    Field field = this.target.getField(fieldName);
+                    Field field = this.target.getDeclaredField(fieldName);
                     field.setAccessible(true);
                     field.set(target, obj);
 
