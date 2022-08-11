@@ -181,7 +181,7 @@ public class SetupLib<T> implements Iterator<SetupPart<T>>, Cloneable {
                     field.set(target, obj);
 
                 } catch (NoSuchFieldException | IllegalAccessException e) {
-                    throw new SetupException(this, e, "Cannot fill field " + fieldName + "!");
+                    throw new SetupException(this, e, "Cannot fill field " + fieldName + "! (" + e.getMessage() + ")");
                 }
             }
 
