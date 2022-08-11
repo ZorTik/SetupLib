@@ -79,7 +79,16 @@ public class SetupLibListener implements Listener {
                             }
                         }
 
-                        boolean finished = setup.doNext(player);
+                        boolean finished;
+                        try {
+                            finished = setup.doNext(player);
+                        } catch(Exception ex) {
+                            ex.printStackTrace();
+
+                            // We need to close the setup now.
+                            finished = false;
+                            handleSetupClose(player, ex);
+                        }
                         if(finished) {
                             handleSetupClose(player, null);
                         }
@@ -89,7 +98,7 @@ public class SetupLibListener implements Listener {
                 });
     }
 
-    private void handleSetupClose(Player player, @Nullable SetupException err) {
+    private void handleSetupClose(Player player, @Nullable Throwable err) {
         SetupLib<?> setup = setups.remove(player.getUniqueId());
         if(setup != null && err != null) {
             setup.handleError(player, err);
