@@ -38,64 +38,66 @@ public class SetupLibListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onChat(AsyncPlayerChatEvent e) {
         Player player = e.getPlayer();
-        getCurrent(player)
-                .ifPresent(setup -> {
-                    e.setCancelled(true);
-                    try {
-                        SetupPart<?> current = setup.getCurrent();
-                        RequiredType type = current.getType();
-                        if(type != null) {
-                            Object obj = type.parse(e.getMessage());
+        Optional<SetupLib<?>> setupOptional = getCurrent(player);
+        if(setupOptional.isPresent()) {
+            SetupLib<?> setup = setupOptional.get();
+            e.setCancelled(true);
 
-                            if(obj == null) {
-                                // Invalid format.
-                                for(String s : current.getAnnot().invalidFormat()) {
-                                    SetupLib.send(player, s);
-                                }
-                                return;
-                            }
-                            current.set(obj);
-                        } else {
-                            SetupLib.CustomTypeBuilder<?> builder = null;
-                            for(Class<?> customType : setup.getCustomTypes().keySet()) {
-                                if(customType.isAssignableFrom(current.getField().getType())) {
-                                    builder = setup.getCustomTypes().get(customType);
-                                    break;
-                                }
-                            }
+            try {
+                SetupPart<?> current = setup.getCurrent();
+                RequiredType type = current.getType();
+                if(type != null) {
+                    Object obj = type.parse(e.getMessage());
 
-                            if(builder == null) {
-                                // Wot?
-                                throw new SetupException(setup, "No custom type builder found for " + current.getField().getType().getName());
-                            }
-
-                            try {
-                                current.set(builder.build(player, e.getMessage()));
-                            } catch (InputNotAcceptibleException ex) {
-                                // Custom error.
-                                for(String s : ex.getMessageLines()) {
-                                    SetupLib.send(player, s);
-                                }
-                            }
+                    if(obj == null) {
+                        // Invalid format.
+                        for(String s : current.getAnnot().invalidFormat()) {
+                            SetupLib.send(player, s);
                         }
-
-                        boolean finished;
-                        try {
-                            finished = setup.doNext(player);
-                        } catch(Exception ex) {
-                            ex.printStackTrace();
-
-                            // We need to close the setup now.
-                            finished = false;
-                            handleSetupClose(player, ex);
-                        }
-                        if(finished) {
-                            handleSetupClose(player, null);
-                        }
-                    } catch (SetupException ex) {
-                        handleSetupClose(player, ex);
+                        return;
                     }
-                });
+                    current.set(obj);
+                } else {
+                    SetupLib.CustomTypeBuilder<?> builder = null;
+                    for(Class<?> customType : setup.getCustomTypes().keySet()) {
+                        if(customType.isAssignableFrom(current.getField().getType())) {
+                            builder = setup.getCustomTypes().get(customType);
+                            break;
+                        }
+                    }
+
+                    if(builder == null) {
+                        // Wot?
+                        throw new SetupException(setup, "No custom type builder found for " + current.getField().getType().getName());
+                    }
+
+                    try {
+                        current.set(builder.build(player, e.getMessage()));
+                    } catch (InputNotAcceptibleException ex) {
+                        // Custom error.
+                        for(String s : ex.getMessageLines()) {
+                            SetupLib.send(player, s);
+                        }
+                    }
+                }
+
+                boolean finished;
+                try {
+                    finished = setup.doNext(player);
+                } catch(Exception ex) {
+                    ex.printStackTrace();
+
+                    // We need to close the setup now.
+                    finished = false;
+                    handleSetupClose(player, ex);
+                }
+                if(finished) {
+                    handleSetupClose(player, null);
+                }
+            } catch (SetupException ex) {
+                handleSetupClose(player, ex);
+            }
+        }
     }
 
     private void handleSetupClose(Player player, @Nullable Throwable err) {
