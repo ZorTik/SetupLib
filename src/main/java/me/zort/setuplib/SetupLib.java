@@ -238,7 +238,15 @@ public class SetupLib<T> implements Iterator<SetupPart<T>>, Cloneable {
     }
 
     protected void handleError(Player player, Throwable err) {
-        errorHandler.onError(player, err);
+        try {
+            errorHandler.onError(player, err);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        for(CompletableFuture<T> future : futures) {
+            // Futures are not completed if error occurred.
+            future.completeExceptionally(err);
+        }
     }
 
     private void checkSetup(Class<T> target) {
