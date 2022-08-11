@@ -64,6 +64,8 @@ public class SetupLib<T> implements Iterator<SetupPart<T>>, Cloneable {
     @Getter(AccessLevel.PROTECTED)
     private SetupMessageDecorator<T>[] decorators;
     @Getter(AccessLevel.PROTECTED)
+    private List<InputHandler<T>> inputHandlers;
+    @Getter(AccessLevel.PROTECTED)
     private Map<Class<?>, CustomTypeBuilder<?>> customTypes;
     private FinishHandler<T> finishHandler;
     private ErrorHandler<T> errorHandler;
@@ -88,6 +90,7 @@ public class SetupLib<T> implements Iterator<SetupPart<T>>, Cloneable {
         this.cache = new HashMap<>();
         this.current = null;
         this.futures = Collections.synchronizedList(new ArrayList<>());
+        this.inputHandlers = Collections.synchronizedList(new ArrayList<>());
         this.customTypes = new HashMap<>();
         onFinish((player, result) -> {});
         onError((player, err) -> {});
@@ -121,6 +124,11 @@ public class SetupLib<T> implements Iterator<SetupPart<T>>, Cloneable {
 
     public <A> SetupLib<T> registerCustomType(Class<A> customType, CustomTypeBuilder<A> builder) {
         customTypes.put(customType, builder);
+        return this;
+    }
+
+    public SetupLib<T> onInput(InputHandler<T> inputHandler) {
+        this.inputHandlers.add(inputHandler);
         return this;
     }
 
@@ -259,6 +267,7 @@ public class SetupLib<T> implements Iterator<SetupPart<T>>, Cloneable {
                 plugin,
                 new HashMap<>(cache),
                 Arrays.copyOf(decorators, decorators.length),
+                inputHandlers,
                 customTypes,
                 finishHandler,
                 errorHandler,
@@ -273,6 +282,10 @@ public class SetupLib<T> implements Iterator<SetupPart<T>>, Cloneable {
 
     public interface SetupMessageDecorator<T> {
         String[] modify(SetupPart<T> part, String[] message);
+    }
+
+    public interface InputHandler<T> {
+        boolean onInput(SetupPart<T> part, Player player, String input);
     }
 
     public interface FinishHandler<T> {

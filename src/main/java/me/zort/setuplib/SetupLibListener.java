@@ -45,6 +45,22 @@ public class SetupLibListener implements Listener {
 
             try {
                 SetupPart<?> current = setup.getCurrent();
+
+                // Pre-handle
+                for(SetupLib.InputHandler ih : setup.getInputHandlers()) {
+                    try {
+                        boolean b = ih.onInput(current, player, e.getMessage());
+                        if(!b) {
+                            // Input was cancelled.
+                            return;
+                        }
+                    } catch(Exception ex) {
+                        ex.printStackTrace();
+                        handleSetupClose(player, ex);
+                        return;
+                    }
+                }
+
                 RequiredType type = current.getType();
                 if(type != null) {
                     Object obj = type.parse(e.getMessage());
@@ -88,8 +104,8 @@ public class SetupLibListener implements Listener {
                     ex.printStackTrace();
 
                     // We need to close the setup now.
-                    finished = false;
                     handleSetupClose(player, ex);
+                    return;
                 }
                 if(finished) {
                     handleSetupClose(player, null);
