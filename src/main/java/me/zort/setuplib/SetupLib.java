@@ -94,7 +94,6 @@ public class SetupLib<T> implements Iterator<SetupPart<T>>, Cloneable {
         onFinish((player, result) -> {});
         onError((player, err) -> {});
         setDecorator(null);
-        checkSetup(target);
     }
 
     public SetupLib<T> setDecorator(@Nullable SetupMessageDecorator<T> decorator) {
@@ -142,9 +141,12 @@ public class SetupLib<T> implements Iterator<SetupPart<T>>, Cloneable {
     }
 
     public CompletableFuture<T> start(Player player) {
+        // Initial checks.
         Preconditions.checkState(hasNext(), "Cannot start empty setup!");
         SetupLibListener listener = LISTENERS.get(plugin.getName());
         Preconditions.checkState(listener != null, "Plugin is not initialized!");
+        checkSetup(target);
+
         SetupLib<T> clone = clone();
         try {
             clone.doNext(player);

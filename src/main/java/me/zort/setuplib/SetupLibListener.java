@@ -8,6 +8,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.Nullable;
@@ -128,6 +129,14 @@ public class SetupLibListener implements Listener {
         SetupLib<?> setup = setups.remove(player.getUniqueId());
         if(setup != null && err != null) {
             setup.handleError(player, err);
+        }
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent e) {
+        SetupLib<?> setup = setups.get(e.getPlayer().getUniqueId());
+        if(setup != null) {
+            handleSetupClose(e.getPlayer(), new SetupException(setup, "Player left."));
         }
     }
 
