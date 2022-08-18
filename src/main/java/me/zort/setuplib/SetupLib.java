@@ -1,6 +1,7 @@
 package me.zort.setuplib;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Primitives;
 import lombok.AccessLevel;
@@ -10,8 +11,10 @@ import me.zort.setuplib.annotation.Setup;
 import me.zort.setuplib.exception.InputNotAcceptibleException;
 import me.zort.setuplib.exception.NotSetupException;
 import me.zort.setuplib.exception.SetupException;
+import me.zort.setuplib.impl.ConfigMessageBuilder;
 import org.apache.commons.lang.ArrayUtils;
 import org.bukkit.ChatColor;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.Plugin;
@@ -69,6 +72,7 @@ public class SetupLib<T> implements Iterator<SetupPart<T>>, Cloneable {
     private Map<Class<?>, CustomTypeBuilder<?>> customTypes;
     private FinishHandler<T> finishHandler;
     private ErrorHandler<T> errorHandler;
+    private MessageBuilder placeholderMessageBuilder;
 
     private final List<CompletableFuture<T>> futures;
 
@@ -91,9 +95,20 @@ public class SetupLib<T> implements Iterator<SetupPart<T>>, Cloneable {
         this.futures = Collections.synchronizedList(new ArrayList<>());
         this.inputHandlers = Collections.synchronizedList(new ArrayList<>());
         this.customTypes = new HashMap<>();
+        // This is default builder that keeps original message.
+        this.placeholderMessageBuilder = Collections::singletonList;
         onFinish((player, result) -> {});
         onError((player, err) -> {});
         setDecorator(null);
+    }
+
+    public SetupLib<T> setConfigSource(FileConfiguration config) {
+        return setMessageBuilder(new ConfigMessageBuilder(config));
+    }
+
+    public SetupLib<T> setMessageBuilder(MessageBuilder builder) {
+        this.placeholderMessageBuilder = builder;
+        return this;
     }
 
     public SetupLib<T> setDecorator(@Nullable SetupMessageDecorator<T> decorator) {
@@ -287,13 +302,23 @@ public class SetupLib<T> implements Iterator<SetupPart<T>>, Cloneable {
                 customTypes,
                 finishHandler,
                 errorHandler,
+                placeholderMessageBuilder,
                 Collections.synchronizedList(new ArrayList<>()),
                 current);
     }
 
-    protected static void send(Player player, String s) {
-        s = ChatColor.translateAlternateColorCodes('&', s);
-        player.sendMessage(s);
+    protected void send(Player player, String s) {
+        List<String> lines = Lists.newArrayList(s);
+        if(s.startsWith("{") && s.endsWith("}") && s.length() > 2) {
+            // This is a configuration placeholder.
+            lines = placeholderMessageBuilder.build(
+                    s.substring(1, s.length() - 1)
+            );
+        }
+        for(String line : lines) {
+            line = ChatColor.translateAlternateColorCodes('&', s);
+            player.sendMessage(line);
+        }
     }
 
     public interface SetupMessageDecorator<T> {
@@ -314,6 +339,25 @@ public class SetupLib<T> implements Iterator<SetupPart<T>>, Cloneable {
 
     public interface CustomTypeBuilder<T> {
         T build(Player player, String arg) throws InputNotAcceptibleException;
+    }
+
+    public interface MessageBuilder {
+        /**
+         * Constructs message according to placeholder
+         * content.
+         * <p>
+         * When message in @{@link Setup} annotation
+         * is set within {} brackets, this buiilder is
+         * used.
+         * <p>
+         * Example: {messages.message} would search
+         * for messages in configuration.
+         *
+         * @param inPlaceholder Content of placeholder
+         *                      without brackets.
+         * @return Constructed message/s.
+         */
+        List<String> build(String inPlaceholder);
     }
 
 }

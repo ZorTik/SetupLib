@@ -37,7 +37,7 @@ public class SetupPart<T> {
             lines = d.modify(this, lines);
         }
         for(String line : lines) {
-            SetupLib.send(player, line);
+            setup.send(player, line);
         }
     }
 

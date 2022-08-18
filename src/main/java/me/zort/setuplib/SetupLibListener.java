@@ -69,7 +69,7 @@ public class SetupLibListener implements Listener {
                     if(obj == null) {
                         // Invalid format.
                         for(String s : current.getAnnot().invalidFormat()) {
-                            SetupLib.send(player, s);
+                            setup.send(player, s);
                         }
                         return;
                     }
@@ -93,7 +93,7 @@ public class SetupLibListener implements Listener {
                     } catch (InputNotAcceptibleException ex) {
                         // Custom error.
                         for(String s : ex.getMessageLines()) {
-                            SetupLib.send(player, s);
+                            setup.send(player, s);
                         }
                     }
                 }
