@@ -72,6 +72,7 @@ public class SetupLib<T> implements Iterator<SetupPart<T>>, Cloneable {
     private Map<Class<?>, CustomTypeBuilder<?>> customTypes;
     private FinishHandler<T> finishHandler;
     private ErrorHandler<T> errorHandler;
+    @Getter(AccessLevel.PROTECTED)
     private MessageBuilder placeholderMessageBuilder;
 
     private final List<CompletableFuture<T>> futures;
@@ -308,17 +309,8 @@ public class SetupLib<T> implements Iterator<SetupPart<T>>, Cloneable {
     }
 
     protected void send(Player player, String s) {
-        List<String> lines = Lists.newArrayList(s);
-        if(s.startsWith("{") && s.endsWith("}") && s.length() > 2) {
-            // This is a configuration placeholder.
-            lines = placeholderMessageBuilder.build(
-                    s.substring(1, s.length() - 1)
-            );
-        }
-        for(String line : lines) {
-            line = ChatColor.translateAlternateColorCodes('&', s);
-            player.sendMessage(line);
-        }
+        s = ChatColor.translateAlternateColorCodes('&', s);
+        player.sendMessage(s);
     }
 
     public interface SetupMessageDecorator<T> {
@@ -347,7 +339,7 @@ public class SetupLib<T> implements Iterator<SetupPart<T>>, Cloneable {
          * content.
          * <p>
          * When message in @{@link Setup} annotation
-         * is set within {} brackets, this buiilder is
+         * is set within {} brackets, this builder is
          * used.
          * <p>
          * Example: {messages.message} would search

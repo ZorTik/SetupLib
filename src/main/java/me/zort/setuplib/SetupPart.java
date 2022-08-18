@@ -2,6 +2,7 @@ package me.zort.setuplib;
 
 import lombok.Getter;
 import me.zort.setuplib.annotation.Setup;
+import org.apache.commons.lang.ArrayUtils;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +33,19 @@ public class SetupPart<T> {
 
     public void send(Player player) {
         Setup annot = field.getAnnotation(Setup.class);
-        String[] lines = annot.message();
+        String[] oldLines = annot.message();
+        String[] lines = new String[0];
+        for(String line : oldLines) {
+            if(line.startsWith("{") && line.endsWith("}") && line.length() > 2) {
+                lines = (String[]) ArrayUtils.addAll(lines,
+                        setup.getPlaceholderMessageBuilder()
+                                .build(line.substring(1, line.length() - 1))
+                                .toArray(new String[0])
+                );
+            } else {
+                lines = (String[]) ArrayUtils.add(lines, line);
+            }
+        }
         for(SetupLib.SetupMessageDecorator<T> d : setup.getDecorators()) {
             lines = d.modify(this, lines);
         }
