@@ -8,6 +8,7 @@ import org.bukkit.plugin.Plugin;
  * creation usage.
  */
 @AllArgsConstructor
+@Deprecated
 public class SetupProvider {
 
     private final Plugin plugin;
