@@ -7,6 +7,7 @@ import com.google.common.primitives.Primitives;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Setter;
 import me.zort.setuplib.annotation.Setup;
 import me.zort.setuplib.exception.InputNotAcceptibleException;
 import me.zort.setuplib.exception.NotSetupException;
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiConsumer;
 
 /**
  * A representation of setup.
@@ -32,53 +34,68 @@ import java.util.concurrent.CompletableFuture;
  * @param <T> Type of target.
  */
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Getter(AccessLevel.PROTECTED)
 public class SetupLib<T> implements Iterator<SetupPart<T>>, Cloneable {
 
     private static final Map<String, SetupLibListener> LISTENERS = Maps.newConcurrentMap();
 
-    public static void init(Plugin plugin) {
-        clear(plugin);
-        LISTENERS.put(plugin.getName(), new SetupLibListener(plugin));
-    }
-
-    public static void clear(Plugin plugin) {
-        clear(plugin.getName());
-    }
-
-    public static void clear(String pluginName) {
-        Optional.ofNullable(LISTENERS.get(pluginName))
-                .ifPresent(HandlerList::unregisterAll);
-        LISTENERS.remove(pluginName);
-    }
-
-    public static <T> SetupLib<T> create(Plugin plugin, Class<T> clazz) {
-        if(!LISTENERS.containsKey(plugin.getName())) {
-            init(plugin);
-        }
-        return new SetupLib<>(plugin, clazz);
-    }
-
-    @Getter(AccessLevel.PROTECTED)
     private final Class<T> target;
-    @Getter(AccessLevel.PROTECTED)
     private final Plugin plugin;
-    @Getter(AccessLevel.PROTECTED)
     private final Map<String, Object> cache;
-    @Getter(AccessLevel.PROTECTED)
     private SetupMessageDecorator<T>[] decorators;
-    @Getter(AccessLevel.PROTECTED)
     private List<InputHandler<T>> inputHandlers;
-    @Getter(AccessLevel.PROTECTED)
     private Map<Class<?>, CustomTypeBuilder<?>> customTypes;
     private FinishHandler<T> finishHandler;
     private ErrorHandler<T> errorHandler;
-    @Getter(AccessLevel.PROTECTED)
     private MessageBuilder placeholderMessageBuilder;
+    @Setter
+    private BiConsumer<Player, String> messageSender;
 
     private final List<CompletableFuture<T>> futures;
 
-    @Getter(AccessLevel.PROTECTED)
     private SetupPart<T> current;
+
+    public interface SetupMessageDecorator<T> {
+        String[] modify(SetupPart<T> part, String[] message);
+    }
+
+    public interface InputHandler<T> {
+        boolean onInput(SetupPart<T> part, Player player, String input);
+    }
+
+    public interface FinishHandler<T> {
+        void onFinish(Player player, T result);
+    }
+
+    public interface ErrorHandler<T> {
+        void onError(Player player, Throwable err);
+    }
+
+    public interface CustomTypeBuilder<T> {
+        T build(Player player, String arg) throws InputNotAcceptibleException;
+    }
+
+    public interface MessageBuilder {
+        /**
+         * Constructs message according to placeholder
+         * content.
+         * <p>
+         * When message in @{@link Setup} annotation
+         * is set within {} brackets, this builder is
+         * used.
+         * <p>
+         * Example: {messages.message} would search
+         * for messages in configuration.
+         * <p>
+         * The configuration source can be set using
+         * {@link SetupLib#setConfigSource(FileConfiguration)}
+         *
+         * @param inPlaceholder Content of placeholder
+         *                      without brackets.
+         * @return Constructed message/s.
+         */
+        List<String> build(String inPlaceholder);
+    }
 
     /**
      * Constructs new SetupLib instance.
@@ -101,6 +118,32 @@ public class SetupLib<T> implements Iterator<SetupPart<T>>, Cloneable {
         onFinish((player, result) -> {});
         onError((player, err) -> {});
         setDecorator(null);
+        setMessageSender((player, msg) -> {
+            msg = ChatColor.translateAlternateColorCodes('&', msg);
+            player.sendMessage(msg);
+        });
+    }
+
+    public static void init(Plugin plugin) {
+        clear(plugin);
+        LISTENERS.put(plugin.getName(), new SetupLibListener(plugin));
+    }
+
+    public static void clear(Plugin plugin) {
+        clear(plugin.getName());
+    }
+
+    public static void clear(String pluginName) {
+        Optional.ofNullable(LISTENERS.get(pluginName))
+                .ifPresent(HandlerList::unregisterAll);
+        LISTENERS.remove(pluginName);
+    }
+
+    public static <T> SetupLib<T> create(Plugin plugin, Class<T> clazz) {
+        if(!LISTENERS.containsKey(plugin.getName())) {
+            init(plugin);
+        }
+        return new SetupLib<>(plugin, clazz);
     }
 
     public SetupLib<T> setConfigSource(FileConfiguration config) {
@@ -304,52 +347,9 @@ public class SetupLib<T> implements Iterator<SetupPart<T>>, Cloneable {
                 finishHandler,
                 errorHandler,
                 placeholderMessageBuilder,
+                messageSender,
                 Collections.synchronizedList(new ArrayList<>()),
                 current);
-    }
-
-    protected void send(Player player, String s) {
-        s = ChatColor.translateAlternateColorCodes('&', s);
-        player.sendMessage(s);
-    }
-
-    public interface SetupMessageDecorator<T> {
-        String[] modify(SetupPart<T> part, String[] message);
-    }
-
-    public interface InputHandler<T> {
-        boolean onInput(SetupPart<T> part, Player player, String input);
-    }
-
-    public interface FinishHandler<T> {
-        void onFinish(Player player, T result);
-    }
-
-    public interface ErrorHandler<T> {
-        void onError(Player player, Throwable err);
-    }
-
-    public interface CustomTypeBuilder<T> {
-        T build(Player player, String arg) throws InputNotAcceptibleException;
-    }
-
-    public interface MessageBuilder {
-        /**
-         * Constructs message according to placeholder
-         * content.
-         * <p>
-         * When message in @{@link Setup} annotation
-         * is set within {} brackets, this builder is
-         * used.
-         * <p>
-         * Example: {messages.message} would search
-         * for messages in configuration.
-         *
-         * @param inPlaceholder Content of placeholder
-         *                      without brackets.
-         * @return Constructed message/s.
-         */
-        List<String> build(String inPlaceholder);
     }
 
 }
