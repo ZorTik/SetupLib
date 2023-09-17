@@ -309,6 +309,10 @@ public class SetupLib<T> implements Iterator<SetupPart<T>>, Cloneable {
         }
     }
 
+    protected void send(Player player, String line) {
+        getMessageSender().accept(player, line);
+    }
+
     private void checkSetup(Class<T> target) {
         boolean anyPart = false;
         for(Field field : getApplicableFields()) {

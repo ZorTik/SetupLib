@@ -50,7 +50,7 @@ public class SetupPart<T> {
             lines = d.modify(this, lines);
         }
         for(String line : lines) {
-            setup.getMessageSender().accept(player, line);
+            setup.send(player, line);
         }
     }
 
