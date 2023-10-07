@@ -36,7 +36,7 @@ public class SetupLibListener implements Listener {
         return Optional.ofNullable(setups.get(player.getUniqueId()));
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
+    @EventHandler(priority = EventPriority.LOWEST)
     public void onChat(AsyncPlayerChatEvent e) {
         Player player = e.getPlayer();
         Optional<SetupLib<?>> setupOptional = getCurrent(player);
